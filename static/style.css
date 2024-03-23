@@ -2,3 +2,6 @@ p {
     font-size: 32px;
     color: blue;
 }
+a {
+    text-decoration: none;
+}

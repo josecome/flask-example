@@ -8,6 +8,7 @@ from flask_jwt_extended import set_access_cookies
 from flask_jwt_extended import unset_jwt_cookies
 
 from app import app
+from .db_conn import mysql
 
 # Here you can globally configure all the ways you want to allow JWTs to
 # be sent to your web application. By default, this will be only headers.
@@ -25,9 +26,26 @@ jwt = JWTManager(app)
 
 @app.route("/api_login", methods=["POST"])
 def api_login():
-    access_token = create_access_token(identity="example_user")
-    return jsonify(access_token=access_token)
-
+    username = request.form['username']
+    password = request.form['password']
+    if all(v is not None for v in [username, password]):
+        cursor = mysql.connection.cursor()
+        cursor.execute('SELECT id,username FROM users WHERE username = %s AND password = %s', (username, password,))
+        account = cursor.fetchone()
+        if account:
+            access_token = create_access_token(identity="example_user")
+            return jsonify(access_token=access_token)
+        else:
+            return 'Invalid Credentials: Please check your username and password and try again'
+    else:
+        cursor = mysql.connection.cursor()
+        cursor.execute('SELECT token FROM tokens WHERE token = %s AND expire_date > CURDATE()', (access_token,))
+        account = cursor.fetchone()
+        if account:
+            return jsonify(access_token=access_token)
+        else:
+            return 'Invalid Credentials: Please check your username and password and try again'
+ 
 
 def delete_token(token):
     pass
